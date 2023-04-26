@@ -1,0 +1,554 @@
+---
+title: "Introducing ReChat: Study 1"
+author: "Will Schulz"
+date: "2023-04-21"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(stargazer)
+library(rechat)
+library(sandwich)
+library(lmtest)
+```
+
+
+```{r}
+single_row = T
+```
+
+
+```{r}
+resizebox.stargazer = function(..., tab.width = "!", tab.height = "!"
+                               ){
+  input_list <- as.list(substitute(list(...)))
+  #message(input_list$out)
+  #Activate str_which() function:
+  require(stringr) 
+
+  #Extract the code returned from stargazer()
+  res = capture.output(
+    stargazer::stargazer(...)
+    )
+
+  #Render the arguments:
+  tab.width = tab.width
+  tab.height = tab.height
+
+  #Attach "}" between \end{tabular} and \end{table}
+  res = 
+    prepend(res, "}", before = length(res))
+
+  #Input \resizebox before \begin{tabular}
+  res = 
+    c(res[1:str_which(res, "^\\\\begin\\{tabular\\}.*")-1],
+      paste0("\\resizebox{",tab.width,"}{",tab.height,"}{%"),
+      #paste0("\\scalebox{",tab.width,"}{",tab.height,"}{%"),
+      res[str_which(res, "^\\\\begin\\{tabular\\}.*"):length(res)]
+      )
+
+  #Produce the whole strings
+  #cat(res, sep = "\n")
+  cat(res, sep = "\n", file = input_list$out)
+}
+
+
+```
+
+
+
+
+```{r, include = F}
+make_robust_se <- function(mod){
+  cov1         <- vcovCL(mod, cluster = ~room_id)
+  robust_se    <- sqrt(diag(cov1))
+  return(robust_se)
+}
+```
+
+
+# Study 1
+
+## Load Raw Data
+
+```{r}
+raw_survey_data <- readRDS("data/study_1/raw_survey_data.rds")
+```
+
+
+## Load and Parse Chats
+
+```{r}
+chat_data <- parseChat("data/study_1/47cb1084-4cf5-4697-be97-f6447c9f186a.csv")
+chat_data_republicans <- parseChat("data/study_1/3583fe12-0f20-44b6-a08d-878ce3842b58.csv")
+```
+
+
+```{r eval = T}
+# Drop My Tests and safe chats_last
+chat_data <- chat_data[-(1)]
+chat_data <- c(chat_data, chat_data_republicans)
+```
+
+
+## Study 1 Analyses
+
+```{r include = F}
+#clean chat data
+
+empty <- c()
+for(i in 1:length(chat_data)){
+  empty[i] <- nrow(chat_data[[i]]$messages)==0
+}
+
+#which(empty)
+chat_data <- chat_data[-which(empty)]
+
+single <- c()
+for(i in 1:length(chat_data)){
+  single[i] <- chat_data[[i]]$messages %>% pull(participantCode) %>% {length(unique(.))<2}
+}
+
+#which(single)
+chat_data <- chat_data[-which(single)]
+```
+
+
+## Survey Cleaning
+
+```{r include = F}
+#functions
+news_recode <- function(x){
+  return(case_when(x == "Never" ~ 0,
+          x == "Less often" ~ 1,
+          x == "1-2 days a week" ~ 2,
+          x == "3-6 days a week" ~ 3,
+          x == "About once a day" ~ 4,
+          x == "Several times a day" ~ 5))
+}
+```
+
+
+```{r include = F}
+s1_survey_data <- raw_survey_data %>%
+  rename(ego_code = number_entry,
+         mot_get_along = motivations_1,
+         mot_say_exactly = motivations_2,
+         mot_finish_quick = motivations_3,
+         mot_good_rating = motivations_4) %>%
+  mutate(
+         chat_consent = case_when((chat_consent=="No, I do not want to participate") ~ FALSE,
+                                  (chat_consent=="Yes, I want to participate") ~ TRUE),
+         affpol_pre = case_when(partisanship == "Democrat" ~ thermo_pre_4 - thermo_pre_7,
+                                partisanship == "Republican" ~ thermo_pre_7 - thermo_pre_4),
+         affpol_post = case_when(partisanship == "Democrat" ~ thermo_post_4 - thermo_post_7,
+                                partisanship == "Republican" ~ thermo_post_7 - thermo_post_4),
+         affpol_change = affpol_post - affpol_pre,
+         demthermo_change = thermo_post_4 - thermo_pre_4,
+         repthermo_change = thermo_post_7 - thermo_pre_7,
+         PID_5 = case_when(
+               PID_dem_strength == "Strong" ~ -2,
+               PID_dem_strength == "Not very strong" ~ -1,
+               PID_leaners == "Closer to Democratic Party" ~ 0,
+               PID_leaners == "Closer to Republican Party" ~ 0,
+               PID_rep_strength == "Not very strong" ~ 1,
+               PID_rep_strength == "Strong" ~ 2
+               ),
+         PID_6 = case_when(
+               PID_dem_strength == "Strong" ~ 1,
+               PID_dem_strength == "Not very strong" ~ 2,
+               PID_leaners == "Closer to Democratic Party" ~ 3,
+               PID_leaners == "Closer to Republican Party" ~ 4,
+               PID_rep_strength == "Not very strong" ~ 5,
+               PID_rep_strength == "Strong" ~ 6
+               ),
+         
+         id_important = case_when(
+               huddy1 =="Not important at all" ~ 0,
+               huddy1 =="Not very important" ~ 1,
+               huddy1 =="Very important" ~ 2,
+               huddy1 =="Extremely important" ~ 3
+               ),
+             id_describe = case_when(
+               huddy2 =="Not at all" ~ 0,
+               huddy2 =="Not very well" ~ 1,
+               huddy2 =="Very well" ~ 2,
+               huddy2 =="Extremely well" ~ 3
+               ),
+             id_wethey = case_when(
+               huddy3 =="Never" ~ 0,
+               huddy3 =="Rarely" ~ 1,
+               huddy3 =="Some of the time" ~ 2,
+               huddy3 =="Most of the time" ~ 3,
+               huddy3 =="All of the time" ~ 4
+               ),
+         
+         tv = news_recode(news_media_1),
+             newspapers = news_recode(news_media_2),
+             radio = news_recode(news_media_3),
+             internet_sm = news_recode(news_media_4),
+             discussions = news_recode(news_media_5),
+             podcasts = news_recode(news_media_6),
+             
+             twitter = !is.na(social_media_1),
+             facebook = !is.na(social_media_2),
+             instagram = !is.na(social_media_3),
+             reddit = !is.na(social_media_9),
+             tiktok = !is.na(social_media_10),
+             youtube = !is.na(social_media_11),
+             
+             primary_sm = primary_sm,
+         
+         age = (2021 - birthyr),
+         
+         male = (gender=="Male"),
+             
+             education = education,
+         college = as.numeric(education)>=4,
+         
+         expressor = !(primary_sm %in% c("I don't use any of these services to express my opinions", NA)),
+         
+         sm_postpol_num = as.numeric(sm_postpol),
+         
+         ideo_7 = as.numeric(ideology)
+         ) %>% filter(ideo_7<=4)
+
+s1_survey_data$guess_partner_ideo <- as.numeric(s1_survey_data$guess_partner_ideo)
+s1_survey_data$guess_partner_ideo[which(s1_survey_data$guess_partner_ideo==8)] <- NA
+
+s1_survey_data$enjoyment <- as.numeric(s1_survey_data$enjoyment)
+s1_survey_data$enjoyment[which(s1_survey_data$enjoyment==5)] <- NA
+s1_survey_data$enjoyment <- max(s1_survey_data$enjoyment, na.rm = T)-s1_survey_data$enjoyment
+
+s1_survey_data$sm_postpol_num[which(s1_survey_data$sm_postpol_num == 6)] <- NA
+s1_survey_data$sm_postpol_num_nazero <- s1_survey_data$sm_postpol_num
+s1_survey_data$sm_postpol_num_nazero[which(is.na(s1_survey_data$sm_postpol_num_nazero))] <- 0
+
+#thermo_pre_4 is Democrats
+#thermo_pre_7 is Republicans
+
+s1_survey_data <- s1_survey_data %>% filter(partisanship!="Republican")
+```
+
+
+
+```{r include = F}
+#recode agree-disagree scales
+ag_disag_recode <- function(x){
+  return(case_when(x == "Strongly disagree" ~ 0,
+          x == "Disagree" ~ 1,
+          x == "Neither agree nor disagree" ~ 2,
+          x == "Agree" ~ 3,
+          x == "Strongly agree" ~ 4))
+}
+
+extro_cols <- s1_survey_data %>% select(ends_with("_extroversion"))
+extro_cols <- apply(extro_cols, MARGIN = 2, ag_disag_recode)
+
+# do pca
+extroversion_scale <- psych::principal(extro_cols, nfactors = 1, rotate = "varimax", missing=TRUE, impute = "mean")$scores[,1]
+
+#hist(extroversion_scale)
+
+if (cor(extroversion_scale, extro_cols[,5])<0) {
+  extroversion_scale <- (-extroversion_scale)
+}
+
+#cor(extroversion_scale, extro_cols[,5])
+
+s1_survey_data$extroversion_scale <- extroversion_scale
+```
+
+
+```{r include = F}
+#identity
+identity_scale <- psych::principal(s1_survey_data %>% dplyr::select(starts_with("id_")), 
+                              nfactors = 1, rotate = "varimax", missing=TRUE, impute = "mean")$scores[,1]
+if (cor(identity_scale, s1_survey_data$id_important)<0) {
+  identity_scale <- (-identity_scale)
+}
+s1_survey_data$identity_scale <- identity_scale
+```
+
+
+```{r include = F}
+## Make SM Scale
+sm_scale <- psych::principal(s1_survey_data %>% dplyr::select(twitter, facebook, instagram, reddit, tiktok, youtube),
+                              nfactors = 1, rotate = "varimax", missing=TRUE, impute = "mean")$scores[,1]
+s1_survey_data$sm_scale <- sm_scale
+```
+
+
+```{r include = F}
+## Media Scale
+media_scale <- psych::principal(s1_survey_data %>% dplyr::select(tv, newspapers, radio, internet_sm, discussions, podcasts),
+                              nfactors = 1, rotate = "varimax", missing=TRUE, impute = "mean")$scores[,1]
+s1_survey_data$media_scale <- media_scale
+```
+
+
+```{r include = F}
+## self_mon Scale
+selfmon_scale <- psych::principal(s1_survey_data %>% transmute(as.numeric(selfMon1), as.numeric(selfMon2), as.numeric(selfMon3)),
+                              nfactors = 1, rotate = "varimax", missing=TRUE, impute = "mean")$scores[,1]
+
+if(cor(selfmon_scale, as.numeric(s1_survey_data$selfMon2))>0){selfmon_scale <- (-selfmon_scale)}
+
+s1_survey_data$selfmon_scale <- selfmon_scale
+```
+
+
+```{r include = F}
+#combine extro and selfmon
+extroselfmon_scale <- psych::principal(cbind(extro_cols, s1_survey_data %>% transmute(as.numeric(selfMon1), as.numeric(selfMon2), as.numeric(selfMon3))),
+                              nfactors = 1, rotate = "varimax", missing=TRUE, impute = "mean")$scores[,1]
+
+hist(extroselfmon_scale)
+
+if (cor(extroselfmon_scale, extro_cols[,5])<0) {
+  extroselfmon_scale <- (-extroselfmon_scale)
+}
+
+cor(extroselfmon_scale, extro_cols[,5])
+
+s1_survey_data$extroselfmon_scale <- extroselfmon_scale
+```
+
+
+# Summarize Sample Size
+
+```{r}
+s1_survey_data
+```
+
+
+```{r}
+s1_survey_data %>% nrow
+#s1_survey_data %>% filter(Status=="IP Address") %>% nrow
+s1_survey_data %>% filter(Finished) %>% nrow #465
+
+s1_survey_data %>%
+  filter(Finished) %>%
+  filter(chat_consent) %>%
+  nrow
+```
+
+
+
+# DV: Self-Selection into Chat Participation
+
+```{r, include=F}
+s1_survey_data %>% filter(Finished)
+s1_survey_data %>% filter(Finished) %>% filter(chat_consent)
+s1_survey_data %>% filter(Finished) %>% filter(!chat_consent)
+```
+
+
+```{r, include=F}
+logit_extroversion_base <- glm(chat_consent ~ extroversion_scale, data = s1_survey_data, family = "binomial")
+logit_extroversion_base %>% summary#keep
+
+logit_selfmon_base <- glm(chat_consent ~ selfmon_scale, data = s1_survey_data, family = "binomial")
+logit_selfmon_base %>% summary#keep?
+
+logit_extroversion <- glm(chat_consent ~ extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale, data = s1_survey_data, family = "binomial")
+logit_extroversion %>% summary
+
+logit_extroversion_ks <- glm(chat_consent ~ extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college, data = s1_survey_data, family = "binomial")
+logit_extroversion_ks %>% summary#keep
+
+logit_extroversion_sm <- glm(chat_consent ~ extroversion_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + selfmon_scale + male + age + college + expressor + sm_postpol_num_nazero, data = s1_survey_data, family = "binomial")
+logit_extroversion_sm %>% summary#keep
+
+expressor_only <- glm(chat_consent ~ expressor, data = s1_survey_data, family = "binomial")
+expressor_only %>% summary
+
+postpol_only <- glm(chat_consent ~ sm_postpol_num_nazero, data = s1_survey_data, family = "binomial")
+postpol_only %>% summary
+```
+
+
+```{r}
+stargazer(logit_extroversion_base, logit_selfmon_base, logit_extroversion, logit_extroversion_ks, logit_extroversion_sm, type = "latex", label = "tab:s1_selection_into_chat", title = "Self-Selection into Chat Participation (Study 1)", out = "outputs/s1_selection_into_chat.tex", table.placement = "H", tab.width = "textwidth", single.row = single_row)
+
+resizebox.stargazer(logit_extroversion_base, logit_selfmon_base, logit_extroversion, logit_extroversion_ks, logit_extroversion_sm, type = "latex", label = "tab:s1_selection_into_chat", title = "Self-Selection into Chat Participation (Study 1)", out = "outputs/s1_selection_into_chat_resized.tex", table.placement = "H", tab.width = "\\textwidth", omit.stat = c("f"), single.row = TRUE)
+
+```
+
+
+```{r}
+#coefplot
+pdf(file = "outputs/s1_coefplot_logit_extroversion_sm.pdf", width = 4, height = 4)
+
+var_lab_cex = .8
+
+these_coefs <- summary(logit_extroversion_sm)$coefficients
+
+vars <- match(c("extroversion_scale", "selfmon_scale", "as.numeric(polInt)", "expressorTRUE", "collegeTRUE"), rownames(these_coefs)) %>% rev
+clean_names <- c("Extroversion", "Self Monitoring", "Political Interest", "Social Media \'Expressor\'", "College") %>% rev
+
+par(bty = "n", pty = "s")
+plot(x = these_coefs[vars,1], y = 1:length(vars), xlab = "Coefficient", yaxt = "n", ylab = "", type = "n",
+     xlim = c(-2, 2),
+     ylim = c(0,length(vars)+1),
+     main = "Chat Participation")
+abline(v = 0, lty = 3)
+points(x = these_coefs[vars,1], y = 1:length(vars), pch = 16)
+segments(x0 = these_coefs[vars,1]-1.96*these_coefs[vars,2], x1 = these_coefs[vars,1]+1.96*these_coefs[vars,2], y0 = 1:length(vars))
+par(xpd=T)
+text(x = these_coefs[vars,1], y = 1:length(vars), labels = clean_names, pos = 3, cex = var_lab_cex)
+dev.off()
+```
+
+
+## Was extroversion correlated with something else?
+
+```{r}
+par(pty="s")
+plot(s1_survey_data$extroversion_scale, s1_survey_data$selfmon_scale)
+plot(s1_survey_data$extroversion_scale, s1_survey_data$polInt)
+boxplot(s1_survey_data$extroversion_scale ~ s1_survey_data$polInt)
+boxplot(s1_survey_data$extroversion_scale ~ s1_survey_data$college)
+boxplot(s1_survey_data$extroversion_scale ~ s1_survey_data$expressor)
+
+```
+
+
+```{r}
+extro_corr_otherpredictors <- lm(data = s1_survey_data, extroversion_scale ~ as.numeric(polInt) + college + expressor)
+extro_corr_otherpredictors %>% summary
+stargazer::stargazer(extro_corr_otherpredictors, type = "text", label = "tab:extro_corr_otherpredictors")
+
+stargazer(extro_corr_otherpredictors, type = "latex", label = "tab:s1_extro_corr_otherpredictors", omit.stat = c("f"), out = "outputs/s1_extro_corr_otherpredictors.tex", table.placement = "H", single.row = single_row)
+
+# resizebox.stargazer(extro_corr_otherpredictors, type = "latex", label = "tab:s1_extro_corr_otherpredictors", omit.stat = c("f"), out = "outputs/s1_extro_corr_otherpredictors_resized.tex", table.placement = "H", tab.height = ".5\\textheight")
+```
+
+
+```{r, include=F}
+# aside on expressors 
+#People who express their political views online are high on self-monitoring and ideological identity strength
+
+glm(expressor ~ extroversion_scale + selfmon_scale, data = s1_survey_data, family = "binomial")%>% summary
+glm(expressor ~ extroversion_scale + selfmon_scale + identity_scale, data = s1_survey_data, family = "binomial")%>% summary
+
+lm(sm_postpol_num_nazero ~ extroversion_scale + selfmon_scale + identity_scale, data = s1_survey_data)%>% summary
+lm(sm_postpol_num ~ extroversion_scale + selfmon_scale + identity_scale, data = s1_survey_data)%>% summary
+
+boxplot(extroversion_scale ~ expressor, data = s1_survey_data)
+boxplot(selfmon_scale ~ expressor, data = s1_survey_data)
+
+plot(jitter(as.numeric(s1_survey_data$expressor)), s1_survey_data$selfmon_scale)
+plot(jitter(as.numeric(s1_survey_data$expressor)), s1_survey_data$extroversion_scale)
+
+par(pty="s")
+plot(s1_survey_data$extroversion_scale, s1_survey_data$selfmon_scale)
+
+cor(s1_survey_data$extroversion_scale, s1_survey_data$selfmon_scale, method = "pearson")
+
+```
+
+
+# Loquaciousness Analyses
+
+```{r}
+word_counter <- function(message){
+  return(str_count(message, "\\w+"))
+}
+
+chat_data <- featurizeChat(chat_data, featurization_function = nchar)
+chat_data <- featurizeChat(chat_data, featurization_function = word_counter)
+
+s1_survey_data <- summarizeChat(s1_survey_data, chat_data, chat_feature_name = "nchar", summary_function = sum, na.rm = T, summary_feature_name = "char_count")
+s1_survey_data <- summarizeChat(s1_survey_data, chat_data, chat_feature_name = "word_counter", summary_function = sum, na.rm = T, summary_feature_name = "word_count")
+```
+
+
+```{r}
+#add some more loquaciousness metrics
+more_thoroughness <- function(chat){
+  #link from participant codd to color code
+  out <- chat$messages %>%
+    group_by(participantCode) %>%
+    summarize(message_count = length(message),
+              unique_word_count = length(unique(unlist(strsplit(message, " ")))),
+              median_word_length = median(nchar(unlist(strsplit(message, " ")))),
+              mean_word_length = mean(nchar(unlist(strsplit(message, " "))))
+              )
+  out <- chat$participants %>% select(receiptCode, colorCode) %>% left_join(., out, by = c("colorCode" = "participantCode"))
+  out <- out %>% mutate(room_id = chat$room_id, started_at = chat$started_at + 12*60*60) #manually adjust for 24-hour format
+  return(out)
+}
+
+more_thoroughnesses <- function(chats, simplify = TRUE){
+  out <- lapply(chats, more_thoroughness)
+  if (simplify) {out <- data.table::rbindlist(l = out)}
+  return(out)
+}
+
+more_thoroughnesses <- more_thoroughnesses(chat_data)
+s1_survey_data_nona <- left_join(s1_survey_data %>% filter(!is.na(ego_code)), more_thoroughnesses %>% filter(!is.na(receiptCode)) %>% select(-c("colorCode", "started_at")), by = c("ego_code" = "receiptCode"))
+```
+
+
+```{r}
+lm_message_count <- lm(message_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college + sm_scale + expressor + sm_postpol_num_nazero, data = s1_survey_data_nona %>% filter(!is.na(room_id)))
+#lm_message_count %>% summary
+
+lm_char_count <- lm(char_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college + sm_scale + expressor + sm_postpol_num_nazero, data = s1_survey_data_nona %>% filter(!is.na(room_id)))
+#lm_char_count %>% summary
+
+lm_word_count <- lm(word_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college + sm_scale + expressor + sm_postpol_num_nazero, data = s1_survey_data_nona %>% filter(!is.na(room_id)))
+#lm_word_count %>% summary
+
+lm_unique_word_count <- lm(unique_word_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college + sm_scale + expressor + sm_postpol_num_nazero, data = s1_survey_data_nona %>% filter(!is.na(room_id)))
+#lm_unique_word_count %>% summary
+
+stargazer::stargazer(lm_message_count, lm_char_count, lm_word_count, lm_unique_word_count, type = "latex",
+                     se = list(make_robust_se(lm_message_count),make_robust_se(lm_char_count),make_robust_se(lm_word_count),make_robust_se(lm_unique_word_count)), title = "Loquaciousness (Study 1)", label = "tab:s1_loquaciousness", out = "outputs/s1_loquaciousness.tex", table.placement = "H", single.row = single_row)
+
+resizebox.stargazer(lm_message_count, lm_char_count, lm_word_count, lm_unique_word_count, type = "latex",
+                     se = list(make_robust_se(lm_message_count),make_robust_se(lm_char_count),make_robust_se(lm_word_count),make_robust_se(lm_unique_word_count)), title = "Loquaciousness (Study 1)", label = "tab:s1_loquaciousness", out = "outputs/s1_loquaciousness_resized.tex", table.placement = "H", omit.stat = c("f"), single.row = TRUE,
+                    tab.width = "\\textwidth"
+                    #tab.height = ".5\\textheight"
+                    )
+
+#, tab.height = "textheight"
+
+```
+
+
+# Analysis of Free Responses
+
+```{r}
+library(stm)
+reasons <- s1_survey_data$why_not[which(!is.na(s1_survey_data$why_not))]
+
+reasons_processed <- textProcessor(reasons, verbose = F)
+stm_0 <- stm(documents = reasons_processed$documents, vocab = reasons_processed$vocab, K = 0, init.type = "Spectral", verbose = F)
+
+stm_0
+labelTopics(stm_0)
+
+stm_2 <- stm(documents = reasons_processed$documents, vocab = reasons_processed$vocab, K = 2, init.type = "Spectral", verbose = F)
+stm_3 <- stm(documents = reasons_processed$documents, vocab = reasons_processed$vocab, K = 3, init.type = "Spectral", verbose = F)
+stm_4 <- stm(documents = reasons_processed$documents, vocab = reasons_processed$vocab, K = 4, init.type = "Spectral", verbose = F)
+stm_5 <- stm(documents = reasons_processed$documents, vocab = reasons_processed$vocab, K = 5, init.type = "Spectral", verbose = F)
+stm_6 <- stm(documents = reasons_processed$documents, vocab = reasons_processed$vocab, K = 6, init.type = "Spectral", verbose = F)
+
+labelTopics(stm_2)
+labelTopics(stm_3) #this seems like the most interpretable one
+labelTopics(stm_4)
+labelTopics(stm_5)
+labelTopics(stm_6)
+
+findThoughts(stm_2, texts = reasons, n = 2, topics = 1)$docs[[1]]
+findThoughts(stm_3, texts = reasons, n = 2, topics = 3)$docs[[1]]
+findThoughts(stm_4, texts = reasons, n = 2, topics = 4)$docs[[1]]
+
+# par(mfrow = c(1, 2),mar = c(.5, .5, 1, .5))
+# plotQuote(thoughts3, width = 30, main = "Topic 3")
+# plotQuote(thoughts20, width = 30, main = "Topic 20")
+```
+

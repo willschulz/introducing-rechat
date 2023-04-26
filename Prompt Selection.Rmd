@@ -1,0 +1,86 @@
+---
+title: "Prompt Selection"
+author: "Will Schulz"
+date: "11/17/2021"
+output: html_document
+---
+
+```{r}
+library(haven)
+library(tidyverse)
+```
+
+
+```{r}
+druckman_traits <- read_dta(file = "data/druckman/Data Misestimating AP September 5 2020.dta") %>%
+  filter(wave1pid %in% c(1,2,3,5,6,7)) %>%
+  dplyr::select(ends_with("_ingroup") | ends_with("_outgroup"), wave1pid) %>%
+  dplyr::select(-starts_with("feelingtherm_"), -starts_with("marry_"), -starts_with("category_"), -starts_with("trust_"), -starts_with("friends_"), -starts_with("neighbors_")) %>%
+  drop_na()
+
+pid <- druckman_traits %>% pull(wave1pid)
+
+in_out <- (druckman_traits %>% dplyr::select(ends_with("_ingroup")) %>% as.matrix) - (druckman_traits %>% dplyr::select(ends_with("_outgroup")) %>% as.matrix)
+colnames(in_out) <- colnames(in_out) %>% str_remove_all("_ingroup")
+
+#recode so positive differences reflect more polarization
+infavor_num <- in_out
+infavor_num[,which(colMeans(in_out)<0)] <- -infavor_num[,which(colMeans(in_out)<0)]
+
+#binary indicator
+infavor_bin <- (infavor_num>0)
+```
+
+
+```{r}
+hist(infavor_num)
+apply(infavor_num, 2, hist)
+
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+apply(infavor_num, 2, mean)
+apply(infavor_num, 2, median)
+apply(infavor_num, 2, getmode)
+```
+
+
+```{r}
+# means_all <- colMeans(infavor_bin)
+# means_rep <- colMeans(infavor_bin[which(pid>4),])
+# means_dem <- colMeans(infavor_bin[which(pid<4),])
+# 
+# plot(1:length(means_all), means_all, ylim = c(.4,.8), pch = 16, ylab = "Mean Ingroup Favoritism", main = "Mean Ingroup Trait-Favoritism", xlab = "", xaxt = "n")
+# segments(x0 = 1:length(means_all), y0 = means_rep, y1 = means_dem)
+# points(1:length(means_all), means_rep, col = "red", pch = 16)
+# points(1:length(means_all), means_dem, col = "blue", pch = 16)
+# axis(1, at = 1:length(means_all), labels = names(means_all), cex.axis = .8)
+# 
+# legend("topleft", pch = 16, col = c("black", "red", "blue"), legend = c("All Partisans", "Republicans", "Democrats"), bty = "n")
+
+```
+
+
+
+```{r}
+means_all <- colMeans(infavor_bin)
+means_rep <- colMeans(infavor_bin[which(pid>4),])
+means_dem <- colMeans(infavor_bin[which(pid<4),])
+
+pdf("outputs/trait_favoritism.pdf", width = 8.5, height = 5)
+
+plot(1:length(means_all), means_all, ylim = c(.4,.8), pch = 16, ylab = "Mean Ingroup Favoritism", main = "Mean Ingroup Trait-Favoritism", xlab = "", xaxt = "n")
+segments(x0 = 1:length(means_all), y0 = means_rep, y1 = means_dem)
+points(1:length(means_all), means_rep, col = "red", pch = 16)
+points(1:length(means_all), means_dem, col = "blue", pch = 16)
+axis(1, at = 1:length(means_all), labels = names(means_all), cex.axis = 1)
+
+legend("topleft", pch = 16, col = c("black", "red", "blue"), legend = c("All Partisans", "Republicans", "Democrats"), bty = "n")
+
+dev.off()
+```
+
+
+
