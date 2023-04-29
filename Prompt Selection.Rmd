@@ -71,11 +71,12 @@ means_dem <- colMeans(infavor_bin[which(pid<4),])
 
 pdf("outputs/trait_favoritism.pdf", width = 8.5, height = 5)
 
-plot(1:length(means_all), means_all, ylim = c(.4,.8), pch = 16, ylab = "Mean Ingroup Favoritism", main = "Mean Ingroup Trait-Favoritism", xlab = "", xaxt = "n")
+plot(1:length(means_all), means_all, ylim = c(.4,.8), pch = 16, ylab = "Mean In-Group Favoritism", main = "Mean In-Group Favoritism in Trait Ratings", xlab = "", xaxt = "n")
 segments(x0 = 1:length(means_all), y0 = means_rep, y1 = means_dem)
 points(1:length(means_all), means_rep, col = "red", pch = 16)
 points(1:length(means_all), means_dem, col = "blue", pch = 16)
 axis(1, at = 1:length(means_all), labels = names(means_all), cex.axis = 1)
+abline(h = .5, col = "black", lty=3)
 
 legend("topleft", pch = 16, col = c("black", "red", "blue"), legend = c("All Partisans", "Republicans", "Democrats"), bty = "n")
 

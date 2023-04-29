@@ -243,7 +243,7 @@ ag_disag_recode <- function(x){
           x == "Strongly agree" ~ 4))
 }
 
-extro_cols <- s1_survey_data %>% select(ends_with("_extroversion"))
+extro_cols <- s1_survey_data %>% dplyr::select(ends_with("_extroversion"))
 extro_cols <- apply(extro_cols, MARGIN = 2, ag_disag_recode)
 
 # do pca
@@ -319,19 +319,8 @@ s1_survey_data$extroselfmon_scale <- extroselfmon_scale
 # Summarize Sample Size
 
 ```{r}
-s1_survey_data
-```
-
-
-```{r}
-s1_survey_data %>% nrow
-#s1_survey_data %>% filter(Status=="IP Address") %>% nrow
-s1_survey_data %>% filter(Finished) %>% nrow #465
-
-s1_survey_data %>%
-  filter(Finished) %>%
-  filter(chat_consent) %>%
-  nrow
+s1_survey_data %>% filter(consent_response=="Yes, I want to participate") %>% nrow #483
+s1_survey_data %>% filter(consent_response=="Yes, I want to participate") %>% filter(chat_consent) %>% nrow #349
 ```
 
 
@@ -358,7 +347,8 @@ logit_extroversion %>% summary
 logit_extroversion_ks <- glm(chat_consent ~ extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college, data = s1_survey_data, family = "binomial")
 logit_extroversion_ks %>% summary#keep
 
-logit_extroversion_sm <- glm(chat_consent ~ extroversion_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + selfmon_scale + male + age + college + expressor + sm_postpol_num_nazero, data = s1_survey_data, family = "binomial")
+logit_extroversion_sm <- glm(chat_consent ~ extroversion_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + selfmon_scale + male + age + college + expressor# + sm_postpol_num_nazero
+                             , data = s1_survey_data, family = "binomial")
 logit_extroversion_sm %>% summary#keep
 
 expressor_only <- glm(chat_consent ~ expressor, data = s1_survey_data, family = "binomial")
@@ -372,8 +362,16 @@ postpol_only %>% summary
 ```{r}
 stargazer(logit_extroversion_base, logit_selfmon_base, logit_extroversion, logit_extroversion_ks, logit_extroversion_sm, type = "latex", label = "tab:s1_selection_into_chat", title = "Self-Selection into Chat Participation (Study 1)", out = "outputs/s1_selection_into_chat.tex", table.placement = "H", tab.width = "textwidth", single.row = single_row)
 
-resizebox.stargazer(logit_extroversion_base, logit_selfmon_base, logit_extroversion, logit_extroversion_ks, logit_extroversion_sm, type = "latex", label = "tab:s1_selection_into_chat", title = "Self-Selection into Chat Participation (Study 1)", out = "outputs/s1_selection_into_chat_resized.tex", table.placement = "H", tab.width = "\\textwidth", omit.stat = c("f"), single.row = TRUE)
+resizebox.stargazer(logit_extroversion_base, logit_selfmon_base, logit_extroversion, logit_extroversion_ks, logit_extroversion_sm, 
+                    type = "latex", label = "tab:s1_selection_into_chat", title = "Self-Selection into Chat Participation (Study 1)",
+                    out = "outputs/s1_selection_into_chat_resized.tex",
+                    #table.placement = "h",
+                    table.placement = "H",
+                    covariate.labels = c("Extroversion", "Self-Monitoring", "Political Interest", "6-point PID", "Affective Polarization", "7-Point Ideology", "Ideological Identity Strength", "Media Consumption Scale", "Male", "Age", "College", "Social Media Expressor"),
+                    dep.var.labels = "Chat Consent",
+                    tab.width = "\\textwidth", omit.stat = c("f"), single.row = TRUE)
 
+#"Partner's Pre-Chat Affect", "Treatment\\\\(Co-Partisan Accountability)"
 ```
 
 
@@ -420,7 +418,10 @@ extro_corr_otherpredictors <- lm(data = s1_survey_data, extroversion_scale ~ as.
 extro_corr_otherpredictors %>% summary
 stargazer::stargazer(extro_corr_otherpredictors, type = "text", label = "tab:extro_corr_otherpredictors")
 
-stargazer(extro_corr_otherpredictors, type = "latex", label = "tab:s1_extro_corr_otherpredictors", omit.stat = c("f"), out = "outputs/s1_extro_corr_otherpredictors.tex", table.placement = "H", single.row = single_row)
+stargazer(extro_corr_otherpredictors, type = "latex", label = "tab:s1_extro_corr_otherpredictors", omit.stat = c("f"), title = "Predictors of Extroversion", out = "outputs/s1_extro_corr_otherpredictors.tex", table.placement = "H", single.row = single_row, dep.var.labels = "Extroversion",
+          covariate.labels = c("Political Interest", "College", "Social Media Expressor"))
+
+
 
 # resizebox.stargazer(extro_corr_otherpredictors, type = "latex", label = "tab:s1_extro_corr_otherpredictors", omit.stat = c("f"), out = "outputs/s1_extro_corr_otherpredictors_resized.tex", table.placement = "H", tab.height = ".5\\textheight")
 ```
@@ -476,7 +477,7 @@ more_thoroughness <- function(chat){
               median_word_length = median(nchar(unlist(strsplit(message, " ")))),
               mean_word_length = mean(nchar(unlist(strsplit(message, " "))))
               )
-  out <- chat$participants %>% select(receiptCode, colorCode) %>% left_join(., out, by = c("colorCode" = "participantCode"))
+  out <- chat$participants %>% dplyr::select(receiptCode, colorCode) %>% left_join(., out, by = c("colorCode" = "participantCode"))
   out <- out %>% mutate(room_id = chat$room_id, started_at = chat$started_at + 12*60*60) #manually adjust for 24-hour format
   return(out)
 }
@@ -488,21 +489,32 @@ more_thoroughnesses <- function(chats, simplify = TRUE){
 }
 
 more_thoroughnesses <- more_thoroughnesses(chat_data)
-s1_survey_data_nona <- left_join(s1_survey_data %>% filter(!is.na(ego_code)), more_thoroughnesses %>% filter(!is.na(receiptCode)) %>% select(-c("colorCode", "started_at")), by = c("ego_code" = "receiptCode"))
+s1_survey_data_nona <- left_join(s1_survey_data %>% filter(!is.na(ego_code)), more_thoroughnesses %>% filter(!is.na(receiptCode)) %>% dplyr::select(-c("colorCode", "started_at")), by = c("ego_code" = "receiptCode"))
 ```
 
 
 ```{r}
-lm_message_count <- lm(message_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college + sm_scale + expressor + sm_postpol_num_nazero, data = s1_survey_data_nona %>% filter(!is.na(room_id)))
+lm_message_count <- lm(message_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college# + sm_scale
+                       + expressor# + sm_postpol_num_nazero
+                       ,
+                       data = s1_survey_data_nona %>% filter(!is.na(room_id)))
 #lm_message_count %>% summary
 
-lm_char_count <- lm(char_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college + sm_scale + expressor + sm_postpol_num_nazero, data = s1_survey_data_nona %>% filter(!is.na(room_id)))
+lm_char_count <- lm(char_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college# + sm_scale
+                    + expressor# + sm_postpol_num_nazero
+                    ,
+                    data = s1_survey_data_nona %>% filter(!is.na(room_id)))
 #lm_char_count %>% summary
 
-lm_word_count <- lm(word_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college + sm_scale + expressor + sm_postpol_num_nazero, data = s1_survey_data_nona %>% filter(!is.na(room_id)))
+lm_word_count <- lm(word_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college# + sm_scale
+                    + expressor# + sm_postpol_num_nazero
+                    ,
+                    data = s1_survey_data_nona %>% filter(!is.na(room_id)))
 #lm_word_count %>% summary
 
-lm_unique_word_count <- lm(unique_word_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college + sm_scale + expressor + sm_postpol_num_nazero, data = s1_survey_data_nona %>% filter(!is.na(room_id)))
+lm_unique_word_count <- lm(unique_word_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college# + sm_scale
+                           + expressor# + sm_postpol_num_nazero
+                           , data = s1_survey_data_nona %>% filter(!is.na(room_id)))
 #lm_unique_word_count %>% summary
 
 stargazer::stargazer(lm_message_count, lm_char_count, lm_word_count, lm_unique_word_count, type = "latex",
@@ -510,6 +522,8 @@ stargazer::stargazer(lm_message_count, lm_char_count, lm_word_count, lm_unique_w
 
 resizebox.stargazer(lm_message_count, lm_char_count, lm_word_count, lm_unique_word_count, type = "latex",
                      se = list(make_robust_se(lm_message_count),make_robust_se(lm_char_count),make_robust_se(lm_word_count),make_robust_se(lm_unique_word_count)), title = "Loquaciousness (Study 1)", label = "tab:s1_loquaciousness", out = "outputs/s1_loquaciousness_resized.tex", table.placement = "H", omit.stat = c("f"), single.row = TRUE,
+                    covariate.labels = c("Treatment\\\\(Co-Partisan Accountability)", "Extroversion", "Self-Monitoring", "Political Interest", "6-point PID", "Affective Polarization", "7-Point Ideology", "Ideological Identity Strength", "Media Consumption Scale", "Male", "Age", "College", "Social Media Expressor"),
+                    dep.var.labels = c("Character Count", "Message Count", "Word Count", "Unique Word Count"),
                     tab.width = "\\textwidth"
                     #tab.height = ".5\\textheight"
                     )

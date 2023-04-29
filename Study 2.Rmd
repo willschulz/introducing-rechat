@@ -244,7 +244,7 @@ ag_disag_recode <- function(x){
           x == "Strongly agree" ~ 4))
 }
 
-extro_cols <- s2_survey_data %>% select(ends_with("_extroversion"))
+extro_cols <- s2_survey_data %>% dplyr::select(ends_with("_extroversion"))
 extro_cols <- apply(extro_cols, MARGIN = 2, ag_disag_recode)
 
 # do pca
@@ -307,6 +307,16 @@ s2_survey_data$extroselfmon_scale <- extroselfmon_scale
 ```
 
 
+# Summarize Sample Size
+
+```{r}
+s2_survey_data %>% filter(consent_response=="Yes, I want to participate") %>% nrow #629
+s2_survey_data %>% filter(consent_response=="Yes, I want to participate") %>% filter(chat_consent) %>% nrow #483
+```
+
+
+
+
 
 ### Calculate Thoroughness (with package functions)
 
@@ -335,7 +345,7 @@ more_thoroughness <- function(chat){
               median_word_length = median(nchar(unlist(strsplit(message, " ")))),
               mean_word_length = mean(nchar(unlist(strsplit(message, " "))))
               )
-  out <- chat$participants %>% select(receiptCode, colorCode) %>% left_join(., out, by = c("colorCode" = "participantCode"))
+  out <- chat$participants %>% dplyr::select(receiptCode, colorCode) %>% left_join(., out, by = c("colorCode" = "participantCode"))
   out <- out %>% mutate(room_id = chat$room_id, started_at = chat$started_at + 12*60*60) #manually adjust for 24-hour format
   return(out)
 }
@@ -352,11 +362,24 @@ more_thoroughnesses <- more_thoroughnesses(chat_data)
 
 #more_thoroughnesses
 
-s2_survey_data <- left_join(s2_survey_data %>% filter(!is.na(ego_code)), more_thoroughnesses %>% filter(!is.na(receiptCode)) %>% select(-c("colorCode", "started_at")), by = c("ego_code" = "receiptCode"))
+s2_survey_data <- left_join(s2_survey_data %>% filter(!is.na(ego_code)), more_thoroughnesses %>% filter(!is.na(receiptCode)) %>% dplyr::select(-c("colorCode", "started_at")), by = c("ego_code" = "receiptCode"))
 
 #s2_survey_data
 ```
 
+
+### Also Do Sentiment Analysis
+
+```{r}
+library(sentimentr)
+mean_sentiment <- function(message){
+  this_sentiment <- sentimentr::sentiment(message) %>% group_by(element_id) %>% summarise(sentiment = mean(sentiment)) %>% pull(sentiment)
+  return(this_sentiment)
+}
+
+chat_data <- featurizeChat(chat_data, feature_name = "sentiment", featurization_function = mean_sentiment)
+s2_survey_data <- summarizeChat(s2_survey_data, chat_data, chat_feature_name = "sentiment", summary_function = mean, na.rm = T, summary_feature_name = "ego_mean_sentiment")
+```
 
 
 
@@ -364,7 +387,7 @@ s2_survey_data <- left_join(s2_survey_data %>% filter(!is.na(ego_code)), more_th
 
 ```{r}
 s2_survey_data <- matchAlters(s2_survey_data, chat_data)
-s2_survey_data <- getAlterVars(s2_survey_data, var_names = c("t", "ideo_7", "affpol_pre", "identity_scale", "male", "PID_6", "message_count", "char_count"))
+s2_survey_data <- getAlterVars(s2_survey_data, var_names = c("t", "ideo_7", "affpol_pre", "identity_scale", "male", "PID_6", "message_count", "char_count", "ego_mean_sentiment"))
 ```
 
 
@@ -384,7 +407,10 @@ p3_prereg_uwcount <- lm(unique_word_count ~ t + ideo_7 + male, data = s2_survey_
 #                      se = list(make_robust_se(p3_prereg_base),make_robust_se(p3_prereg_mcount),make_robust_se(p3_prereg_wcount),make_robust_se(p3_prereg_uwcount)), label = "tab:s2_prereg_loquaciousness", title = "Loquaciousness (Study 2)", out = "outputs/s2_prereg_loquaciousness.tex", table.placement = "H")
 
 resizebox.stargazer(p3_prereg_base, p3_prereg_mcount, p3_prereg_wcount, p3_prereg_uwcount, type = "latex",
-                     se = list(make_robust_se(p3_prereg_base),make_robust_se(p3_prereg_mcount),make_robust_se(p3_prereg_wcount),make_robust_se(p3_prereg_uwcount)), label = "tab:s2_prereg_loquaciousness", title = "Loquaciousness (Study 2)", out = "outputs/s2_prereg_loquaciousness.tex", table.placement = "H", tab.width = "\\textwidth", single.row = single_row)
+                     se = list(make_robust_se(p3_prereg_base),make_robust_se(p3_prereg_mcount),make_robust_se(p3_prereg_wcount),make_robust_se(p3_prereg_uwcount)), label = "tab:s2_prereg_loquaciousness", title = "Loquaciousness (Study 2)", out = "outputs/s2_prereg_loquaciousness.tex", table.placement = "H", tab.width = "\\textwidth",
+                    covariate.labels = c("Treatment\\\\(Co-Partisan Accountability)", "7-Point Ideology", "Male"),
+                    dep.var.labels = c("Character Count", "Message Count", "Word Count", "Unique Word Count"),
+                    single.row = single_row)
 
 ```
 
@@ -444,6 +470,62 @@ dev.off()
 ```
 
 
+```{r}
+# 2-panel version
+pdf(file = "outputs/s2_coefplot_char.pdf", width = 4, height = 4)
+var_lab_cex = .8
+
+#coefplot for pre-reg model
+these_coefs <- summary(p3_prereg_base)$coefficients
+these_ses <- make_robust_se(p3_prereg_base)
+
+# vars <- match(c("(Intercept)", "t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
+# clean_names <- c("Intercept", "Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+
+vars <- match(c("t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
+clean_names <- c("Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+
+par(bty = "n", pty = "s")
+plot(x = these_coefs[vars,1], y = 1:length(vars), xlab = "Coefficient", yaxt = "n", ylab = "", type = "n",
+     xlim = c(-150, 100),
+     ylim = c(0,length(vars)+1),
+     main = "Character Count")
+abline(v = 0, lty = 3)
+points(x = these_coefs[vars,1], y = 1:length(vars), pch = 16)
+#segments(x0 = these_coefs[vars,1]-1.96*these_coefs[vars,2], x1 = these_coefs[vars,1]+1.96*these_coefs[vars,2], y0 = 1:length(vars))
+segments(x0 = these_coefs[vars,1]-1.96*these_ses[vars], x1 = these_coefs[vars,1]+1.96*these_ses[vars], y0 = 1:length(vars))
+par(xpd = T)
+text(x = these_coefs[vars,1], y = 1:length(vars), labels = clean_names, pos = 3, cex = var_lab_cex)
+par(xpd = F)
+dev.off()
+
+pdf(file = "outputs/s2_coefplot_mess.pdf", width = 4, height = 4)
+#coefplot for message-count model
+these_coefs <- summary(p3_prereg_mcount)$coefficients
+these_ses <- make_robust_se(p3_prereg_mcount)
+
+# vars <- match(c("(Intercept)", "t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
+# clean_names <- c("Intercept", "Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+
+vars <- match(c("t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
+clean_names <- c("Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+
+par(bty = "n", pty = "s")
+plot(x = these_coefs[vars,1], y = 1:length(vars), xlab = "Coefficient", yaxt = "n", ylab = "", type = "n",
+     xlim = c(-5, 3),
+     ylim = c(0,length(vars)+1),
+     main = "Message Count")
+abline(v = 0, lty = 3)
+points(x = these_coefs[vars,1], y = 1:length(vars), pch = 16)
+#segments(x0 = these_coefs[vars,1]-1.96*these_coefs[vars,2], x1 = these_coefs[vars,1]+1.96*these_coefs[vars,2], y0 = 1:length(vars))
+segments(x0 = these_coefs[vars,1]-1.96*these_ses[vars], x1 = these_coefs[vars,1]+1.96*these_ses[vars], y0 = 1:length(vars))
+par(xpd = T)
+text(x = these_coefs[vars,1], y = 1:length(vars), labels = clean_names, pos = 3, cex = var_lab_cex)
+par(xpd = F)
+dev.off()
+```
+
+
 ## DV: Affective Polarization
 
 ```{r}
@@ -486,8 +568,30 @@ stargazer(lm_affpol_0,lm_affpol_1,lm_affpol_2, type = "latex",
           se = list(make_robust_se(lm_affpol_0), make_robust_se(lm_affpol_1), make_robust_se(lm_affpol_2)), title = "Group Polarization", label = "tab:s2_group_polarization_main", out = "outputs/s2_group_polarization_main.tex", dep.var.labels = "Post-Chat Partisan Affect (D - R Feeling Thermo Diff)", covariate.labels = c("Pre-Chat Affect", "Partner's Pre-Chat Affect", "Treatment\\\\(Co-Partisan Accountability)"), omit.stat = c("f"), table.placement = "H", single.row = single_row)
 
 stargazer(lm_affpol_1a,lm_affpol_1b, type = "latex",
-         se = list(make_robust_se(lm_affpol_1a), make_robust_se(lm_affpol_1b)), title = "Group Polarization (Interaction Tests of Relative Loquaciousness)", label = "tab:s2_group_polarization_interactions", omit.stat = c("f"), out = "outputs/s2_group_polarization_interactions.tex", table.placement = "H", single.row = single_row)
+         se = list(make_robust_se(lm_affpol_1a), make_robust_se(lm_affpol_1b)), title = "Group Polarization (Interaction Tests of Relative Loquaciousness)", label = "tab:s2_group_polarization_interactions", omit.stat = c("f"), out = "outputs/s2_group_polarization_interactions.tex", table.placement = "H", single.row = single_row,
+         dep.var.labels = "Post-Chat Partisan Affect (D - R Feeling Thermo Diff)", covariate.labels = c("Pre-Chat Affect", "Partner's Pre-Chat Affect", "Partner Sent More Messages", "Partner's Pre-Chat Affect\\\\$\\times$ Partner Sent More Messages", "Partner Wrote More Characters", "Partner's Pre-Chat Affect\\\\$\\times$ Partner Wrote More Characters"))#target
 
 ```
+
+
+# Sentiment Analysis
+
+```{r}
+s2_mean_sentiment_base <- lm(ego_mean_sentiment ~ affpol_pre, data = affpol_data %>% filter(!is.na(alter_affpol_pre)))
+s2_mean_sentiment_base %>% summary
+
+s2_sentiment_lm_ks <- lm(ego_mean_sentiment ~ affpol_pre + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + ideo_7 + identity_scale + media_scale, data = affpol_data %>% filter(!is.na(alter_affpol_pre)))
+s2_sentiment_lm_ks %>% summary
+
+stargazer(s2_mean_sentiment_base, s2_sentiment_lm_ks, type = "latex",
+         se = list(make_robust_se(s2_mean_sentiment_base), make_robust_se(s2_sentiment_lm_ks)), title = "Baseline Partisan Affect and Mean Message Sentiment", label = "tab:s2_sentiment", omit.stat = c("f"), out = "outputs/s2_sentiment.tex", table.placement = "H", single.row = single_row,
+         dep.var.labels = "Mean Sentiment of Messages", covariate.labels = c("Baseline Partisan Affect", "Extroversion", "Self-Monitoring", "Political Interest", "6-Point PID", "7-Point Ideology", "Ideological Identity", "Media Consumption Scale"))
+```
+
+
+
+
+
+
 
 
