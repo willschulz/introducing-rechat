@@ -211,7 +211,8 @@ s1_survey_data <- raw_survey_data %>%
          
          sm_postpol_num = as.numeric(sm_postpol),
          
-         ideo_7 = as.numeric(ideology)
+         ideo_7 = as.numeric(ideology),
+         ideological_extremity = 4-ideo_7
          ) %>% filter(ideo_7<=4)
 
 s1_survey_data$guess_partner_ideo <- as.numeric(s1_survey_data$guess_partner_ideo)
@@ -336,26 +337,12 @@ s1_survey_data %>% filter(Finished) %>% filter(!chat_consent)
 
 ```{r, include=F}
 logit_extroversion_base <- glm(chat_consent ~ extroversion_scale, data = s1_survey_data, family = "binomial")
-logit_extroversion_base %>% summary#keep
-
 logit_selfmon_base <- glm(chat_consent ~ selfmon_scale, data = s1_survey_data, family = "binomial")
-logit_selfmon_base %>% summary#keep?
-
 logit_extroversion <- glm(chat_consent ~ extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale, data = s1_survey_data, family = "binomial")
-logit_extroversion %>% summary
-
 logit_extroversion_ks <- glm(chat_consent ~ extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college, data = s1_survey_data, family = "binomial")
-logit_extroversion_ks %>% summary#keep
-
-logit_extroversion_sm <- glm(chat_consent ~ extroversion_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + selfmon_scale + male + age + college + expressor# + sm_postpol_num_nazero
-                             , data = s1_survey_data, family = "binomial")
-logit_extroversion_sm %>% summary#keep
-
+logit_extroversion_sm <- glm(chat_consent ~ extroversion_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + selfmon_scale + male + age + college + expressor, data = s1_survey_data, family = "binomial")
 expressor_only <- glm(chat_consent ~ expressor, data = s1_survey_data, family = "binomial")
-expressor_only %>% summary
-
 postpol_only <- glm(chat_consent ~ sm_postpol_num_nazero, data = s1_survey_data, family = "binomial")
-postpol_only %>% summary
 ```
 
 
@@ -468,7 +455,7 @@ s1_survey_data <- summarizeChat(s1_survey_data, chat_data, chat_feature_name = "
 
 ```{r}
 #add some more loquaciousness metrics
-more_thoroughness <- function(chat){
+more_loquaciousness <- function(chat){
   #link from participant codd to color code
   out <- chat$messages %>%
     group_by(participantCode) %>%
@@ -482,47 +469,40 @@ more_thoroughness <- function(chat){
   return(out)
 }
 
-more_thoroughnesses <- function(chats, simplify = TRUE){
-  out <- lapply(chats, more_thoroughness)
+more_loquaciousnesses <- function(chats, simplify = TRUE){
+  out <- lapply(chats, more_loquaciousness)
   if (simplify) {out <- data.table::rbindlist(l = out)}
   return(out)
 }
 
-more_thoroughnesses <- more_thoroughnesses(chat_data)
-s1_survey_data_nona <- left_join(s1_survey_data %>% filter(!is.na(ego_code)), more_thoroughnesses %>% filter(!is.na(receiptCode)) %>% dplyr::select(-c("colorCode", "started_at")), by = c("ego_code" = "receiptCode"))
+more_loquaciousnesses <- more_loquaciousnesses(chat_data)
+s1_survey_data_nona <- left_join(s1_survey_data %>% filter(!is.na(ego_code)), more_loquaciousnesses %>% filter(!is.na(receiptCode)) %>% dplyr::select(-c("colorCode", "started_at")), by = c("ego_code" = "receiptCode"))
 ```
 
 
 ```{r}
-lm_message_count <- lm(message_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college# + sm_scale
-                       + expressor# + sm_postpol_num_nazero
-                       ,
+lm_message_count <- lm(message_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideological_extremity + identity_scale + media_scale + male + age + college + expressor,
                        data = s1_survey_data_nona %>% filter(!is.na(room_id)))
 #lm_message_count %>% summary
 
-lm_char_count <- lm(char_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college# + sm_scale
-                    + expressor# + sm_postpol_num_nazero
-                    ,
+lm_char_count <- lm(char_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideological_extremity + identity_scale + media_scale + male + age + college + expressor,
                     data = s1_survey_data_nona %>% filter(!is.na(room_id)))
 #lm_char_count %>% summary
 
-lm_word_count <- lm(word_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college# + sm_scale
-                    + expressor# + sm_postpol_num_nazero
-                    ,
+lm_word_count <- lm(word_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideological_extremity + identity_scale + media_scale + male + age + college + expressor,
                     data = s1_survey_data_nona %>% filter(!is.na(room_id)))
 #lm_word_count %>% summary
 
-lm_unique_word_count <- lm(unique_word_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideo_7 + identity_scale + media_scale + male + age + college# + sm_scale
-                           + expressor# + sm_postpol_num_nazero
+lm_unique_word_count <- lm(unique_word_count ~ t + extroversion_scale + selfmon_scale + as.numeric(polInt) + PID_6 + affpol_pre + ideological_extremity + identity_scale + media_scale + male + age + college + expressor
                            , data = s1_survey_data_nona %>% filter(!is.na(room_id)))
 #lm_unique_word_count %>% summary
 
 stargazer::stargazer(lm_message_count, lm_char_count, lm_word_count, lm_unique_word_count, type = "latex",
                      se = list(make_robust_se(lm_message_count),make_robust_se(lm_char_count),make_robust_se(lm_word_count),make_robust_se(lm_unique_word_count)), title = "Loquaciousness (Study 1)", label = "tab:s1_loquaciousness", out = "outputs/s1_loquaciousness.tex", table.placement = "H", single.row = single_row)
 
-resizebox.stargazer(lm_message_count, lm_char_count, lm_word_count, lm_unique_word_count, type = "latex",
-                     se = list(make_robust_se(lm_message_count),make_robust_se(lm_char_count),make_robust_se(lm_word_count),make_robust_se(lm_unique_word_count)), title = "Loquaciousness (Study 1)", label = "tab:s1_loquaciousness", out = "outputs/s1_loquaciousness_resized.tex", table.placement = "H", omit.stat = c("f"), single.row = TRUE,
-                    covariate.labels = c("Treatment\\\\(Co-Partisan Accountability)", "Extroversion", "Self-Monitoring", "Political Interest", "6-point PID", "Affective Polarization", "7-Point Ideology", "Ideological Identity Strength", "Media Consumption Scale", "Male", "Age", "College", "Social Media Expressor"),
+resizebox.stargazer(lm_char_count, lm_message_count, lm_word_count, lm_unique_word_count, type = "latex",
+                     se = list(make_robust_se(lm_char_count),make_robust_se(lm_message_count),make_robust_se(lm_word_count),make_robust_se(lm_unique_word_count)), title = "Loquaciousness (Study 1)", label = "tab:s1_loquaciousness", out = "outputs/s1_loquaciousness_resized.tex", table.placement = "H", omit.stat = c("f"), single.row = TRUE,
+                    covariate.labels = c("Treatment\\\\(Co-Partisan Accountability)", "Extroversion", "Self-Monitoring", "Political Interest", "6-point PID", "Affective Polarization", "Ideological Extremity", "Ideological Identity Strength", "Media Consumption Scale", "Male", "Age", "College", "Social Media Expressor"),
                     dep.var.labels = c("Character Count", "Message Count", "Word Count", "Unique Word Count"),
                     tab.width = "\\textwidth"
                     #tab.height = ".5\\textheight"

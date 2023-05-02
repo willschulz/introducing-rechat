@@ -5,6 +5,8 @@ date: "2023-04-25"
 output: html_document
 ---
 
+This document contains the code used for anonymizing the replication data.  This code cannot be run with out access to the original raw data, which for obvious reasons is not included in this repository.  Rather, this code is included for transparency, to show what was removed from the raw data.
+
 ```{r}
 library(tidyverse)
 library(rechat)
@@ -12,12 +14,9 @@ library(rechat)
 
 
 ```{r}
-dir.create("data")
 dir.create("data/study_1")
 dir.create("data/study_2")
 ```
-
-
 
 
 ```{r}
@@ -27,8 +26,6 @@ readRDS("../raw_data/study_1/raw_survey_data.rds") %>% select(-workerId, -assign
 # Study 2 survey data
 readRDS("../raw_data/study_2/raw_survey_data.rds") %>% select(-workerId, -assignmentId, -hitId, -feedback_freetext) %>% saveRDS(., "data/study_2/raw_survey_data.rds")
 ```
-
-
 
 
 ```{r}
@@ -55,6 +52,8 @@ readRDS("../raw_data/study_2/raw_survey_data.rds") %>% select(-workerId, -assign
 
 
 # Anonymize Chat Data
+
+Chat nicknames were removed from the raw chat data data, in case these nicknames might be used to identify the chat participants.  Nicknames are likely not identifiable, but were removed out of an abundance of caution.
 
 ```{r}
 get_nicknames <- function(x){

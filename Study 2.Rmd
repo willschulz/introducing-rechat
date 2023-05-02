@@ -214,7 +214,8 @@ s2_survey_data <- raw_survey_data %>%
          
          sm_postpol_num = as.numeric(sm_postpol),
          
-         ideo_7 = as.numeric(ideology)
+         ideo_7 = as.numeric(ideology),
+         ideological_extremity = 4-ideo_7
          ) %>% filter(ideo_7<=4)
 
 s2_survey_data$guess_partner_ideo <- as.numeric(s2_survey_data$guess_partner_ideo)
@@ -318,7 +319,7 @@ s2_survey_data %>% filter(consent_response=="Yes, I want to participate") %>% fi
 
 
 
-### Calculate Thoroughness (with package functions)
+### Calculate Loquaciousness
 
 
 ```{r}
@@ -336,7 +337,7 @@ s2_survey_data <- summarizeChat(s2_survey_data, chat_data, chat_feature_name = "
 
 ```{r}
 #add some more loquaciousness metrics
-more_thoroughness <- function(chat){
+more_loquaciousness <- function(chat){
   #link from participant codd to color code
   out <- chat$messages %>%
     group_by(participantCode) %>%
@@ -350,19 +351,19 @@ more_thoroughness <- function(chat){
   return(out)
 }
 
-more_thoroughnesses <- function(chats, simplify = TRUE){
-  out <- lapply(chats, more_thoroughness)
+more_loquaciousnesses <- function(chats, simplify = TRUE){
+  out <- lapply(chats, more_loquaciousness)
   if (simplify) {out <- data.table::rbindlist(l = out)}
   return(out)
 }
 
 #implement it
 
-more_thoroughnesses <- more_thoroughnesses(chat_data)
+more_loquaciousnesses <- more_loquaciousnesses(chat_data)
 
-#more_thoroughnesses
+#more_loquaciousnesses
 
-s2_survey_data <- left_join(s2_survey_data %>% filter(!is.na(ego_code)), more_thoroughnesses %>% filter(!is.na(receiptCode)) %>% dplyr::select(-c("colorCode", "started_at")), by = c("ego_code" = "receiptCode"))
+s2_survey_data <- left_join(s2_survey_data %>% filter(!is.na(ego_code)), more_loquaciousnesses %>% filter(!is.na(receiptCode)) %>% dplyr::select(-c("colorCode", "started_at")), by = c("ego_code" = "receiptCode"))
 
 #s2_survey_data
 ```
@@ -391,14 +392,14 @@ s2_survey_data <- getAlterVars(s2_survey_data, var_names = c("t", "ideo_7", "aff
 ```
 
 
-## DV: Thoroughness/Extent of Participation
+## DV: Loquaciousness
 
 
 ```{r}
-p3_prereg_base <- lm(char_count ~ t + ideo_7 + male, data = s2_survey_data %>% filter(!is.na(room_id)))
-p3_prereg_mcount <- lm(message_count ~ t + ideo_7 + male, data = s2_survey_data %>% filter(!is.na(room_id)))
-p3_prereg_wcount <- lm(word_count ~ t + ideo_7 + male, data = s2_survey_data %>% filter(!is.na(room_id)))
-p3_prereg_uwcount <- lm(unique_word_count ~ t + ideo_7 + male, data = s2_survey_data %>% filter(!is.na(room_id)))
+p3_prereg_base <- lm(char_count ~ t + ideological_extremity + male, data = s2_survey_data %>% filter(!is.na(room_id)))
+p3_prereg_mcount <- lm(message_count ~ t + ideological_extremity + male, data = s2_survey_data %>% filter(!is.na(room_id)))
+p3_prereg_wcount <- lm(word_count ~ t + ideological_extremity + male, data = s2_survey_data %>% filter(!is.na(room_id)))
+p3_prereg_uwcount <- lm(unique_word_count ~ t + ideological_extremity + male, data = s2_survey_data %>% filter(!is.na(room_id)))
 ```
 
 
@@ -408,11 +409,29 @@ p3_prereg_uwcount <- lm(unique_word_count ~ t + ideo_7 + male, data = s2_survey_
 
 resizebox.stargazer(p3_prereg_base, p3_prereg_mcount, p3_prereg_wcount, p3_prereg_uwcount, type = "latex",
                      se = list(make_robust_se(p3_prereg_base),make_robust_se(p3_prereg_mcount),make_robust_se(p3_prereg_wcount),make_robust_se(p3_prereg_uwcount)), label = "tab:s2_prereg_loquaciousness", title = "Loquaciousness (Study 2)", out = "outputs/s2_prereg_loquaciousness.tex", table.placement = "H", tab.width = "\\textwidth",
-                    covariate.labels = c("Treatment\\\\(Co-Partisan Accountability)", "7-Point Ideology", "Male"),
+                    covariate.labels = c("Treatment\\\\(Co-Partisan Accountability)", "Ideological Extremity", "Male"),
                     dep.var.labels = c("Character Count", "Message Count", "Word Count", "Unique Word Count"),
                     single.row = single_row)
 
+# stargazer(p3_prereg_base, p3_prereg_mcount, p3_prereg_wcount, p3_prereg_uwcount, type = "text",
+#                      se = list(make_robust_se(p3_prereg_base),make_robust_se(p3_prereg_mcount),make_robust_se(p3_prereg_wcount),make_robust_se(p3_prereg_uwcount)),
+#                     covariate.labels = c("Treatment\\\\(Co-Partisan Accountability)", "Ideological Extremity", "Male"),
+#                     dep.var.labels = c("Character Count", "Message Count", "Word Count", "Unique Word Count"),
+#                     single.row = single_row)
+
 ```
+
+
+```{r}
+#Note: we used the make_robust_se() function defined above for generating clustered SEs for the stargazer table output above.  This differs from the exact code that appears in our pre-registration, however we run the pre-registered code below to demonstrate that it produces the same significance result.  Our deviation from the pre-registered code was done solely to make it easier to generate stargazer tables.
+lmtest::coeftest(p3_prereg_base, vcov. = sandwich::vcovCL, cluster = ~room_id)
+
+# A 1-sided test does not affect the significance of our results at the planned threshold:
+stargazer(p3_prereg_base, se = list(make_robust_se(p3_prereg_base)), type = "text", apply.p = function(x) return(x/2))
+```
+
+
+
 
 ### Coefplots
 
@@ -425,10 +444,10 @@ var_lab_cex = .8
 these_coefs <- summary(p3_prereg_base)$coefficients
 these_ses <- make_robust_se(p3_prereg_base)
 
-# vars <- match(c("(Intercept)", "t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
+# vars <- match(c("(Intercept)", "t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
 # clean_names <- c("Intercept", "Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
 
-vars <- match(c("t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
+vars <- match(c("t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
 clean_names <- c("Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
 
 par(bty = "n", pty = "s", mfrow = c(1,2))
@@ -448,10 +467,10 @@ par(xpd = F)
 these_coefs <- summary(p3_prereg_mcount)$coefficients
 these_ses <- make_robust_se(p3_prereg_mcount)
 
-# vars <- match(c("(Intercept)", "t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
+# vars <- match(c("(Intercept)", "t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
 # clean_names <- c("Intercept", "Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
 
-vars <- match(c("t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
+vars <- match(c("t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
 clean_names <- c("Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
 
 #par(bty = "n", pty = "s")
@@ -479,11 +498,11 @@ var_lab_cex = .8
 these_coefs <- summary(p3_prereg_base)$coefficients
 these_ses <- make_robust_se(p3_prereg_base)
 
-# vars <- match(c("(Intercept)", "t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
+# vars <- match(c("(Intercept)", "t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
 # clean_names <- c("Intercept", "Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
 
-vars <- match(c("t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
-clean_names <- c("Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+vars <- match(c("t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
+clean_names <- c("Co-Partisan Accountability Treatment", "Ideological Extremity", "Male") %>% rev
 
 par(bty = "n", pty = "s")
 plot(x = these_coefs[vars,1], y = 1:length(vars), xlab = "Coefficient", yaxt = "n", ylab = "", type = "n",
@@ -504,11 +523,11 @@ pdf(file = "outputs/s2_coefplot_mess.pdf", width = 4, height = 4)
 these_coefs <- summary(p3_prereg_mcount)$coefficients
 these_ses <- make_robust_se(p3_prereg_mcount)
 
-# vars <- match(c("(Intercept)", "t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
+# vars <- match(c("(Intercept)", "t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
 # clean_names <- c("Intercept", "Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
 
-vars <- match(c("t", "ideo_7", "maleTRUE"), rownames(these_coefs)) %>% rev
-clean_names <- c("Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+vars <- match(c("t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
+clean_names <- c("Co-Partisan Accountability Treatment", "Ideological Extremity", "Male") %>% rev
 
 par(bty = "n", pty = "s")
 plot(x = these_coefs[vars,1], y = 1:length(vars), xlab = "Coefficient", yaxt = "n", ylab = "", type = "n",
@@ -569,7 +588,7 @@ stargazer(lm_affpol_0,lm_affpol_1,lm_affpol_2, type = "latex",
 
 stargazer(lm_affpol_1a,lm_affpol_1b, type = "latex",
          se = list(make_robust_se(lm_affpol_1a), make_robust_se(lm_affpol_1b)), title = "Group Polarization (Interaction Tests of Relative Loquaciousness)", label = "tab:s2_group_polarization_interactions", omit.stat = c("f"), out = "outputs/s2_group_polarization_interactions.tex", table.placement = "H", single.row = single_row,
-         dep.var.labels = "Post-Chat Partisan Affect (D - R Feeling Thermo Diff)", covariate.labels = c("Pre-Chat Affect", "Partner's Pre-Chat Affect", "Partner Sent More Messages", "Partner's Pre-Chat Affect\\\\$\\times$ Partner Sent More Messages", "Partner Wrote More Characters", "Partner's Pre-Chat Affect\\\\$\\times$ Partner Wrote More Characters"))#target
+         dep.var.labels = "Post-Chat Partisan Affect (D - R Feeling Thermo Diff)", covariate.labels = c("Pre-Chat Affect", "Partner's Pre-Chat Affect", "Partner Sent More Messages", "Partner's Pre-Chat Affect\\\\$\\times$ Partner Sent More Messages", "Partner Wrote More Characters", "Partner's Pre-Chat Affect\\\\$\\times$ Partner Wrote More Characters"))
 
 ```
 
@@ -587,7 +606,6 @@ stargazer(s2_mean_sentiment_base, s2_sentiment_lm_ks, type = "latex",
          se = list(make_robust_se(s2_mean_sentiment_base), make_robust_se(s2_sentiment_lm_ks)), title = "Baseline Partisan Affect and Mean Message Sentiment", label = "tab:s2_sentiment", omit.stat = c("f"), out = "outputs/s2_sentiment.tex", table.placement = "H", single.row = single_row,
          dep.var.labels = "Mean Sentiment of Messages", covariate.labels = c("Baseline Partisan Affect", "Extroversion", "Self-Monitoring", "Political Interest", "6-Point PID", "7-Point Ideology", "Ideological Identity", "Media Consumption Scale"))
 ```
-
 
 
 
