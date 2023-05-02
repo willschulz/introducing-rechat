@@ -215,7 +215,8 @@ s2_survey_data <- raw_survey_data %>%
          sm_postpol_num = as.numeric(sm_postpol),
          
          ideo_7 = as.numeric(ideology),
-         ideological_extremity = 4-ideo_7
+         ideological_extremity = 4-ideo_7,
+         t = 1-t
          ) %>% filter(ideo_7<=4)
 
 s2_survey_data$guess_partner_ideo <- as.numeric(s2_survey_data$guess_partner_ideo)
@@ -409,13 +410,13 @@ p3_prereg_uwcount <- lm(unique_word_count ~ t + ideological_extremity + male, da
 
 resizebox.stargazer(p3_prereg_base, p3_prereg_mcount, p3_prereg_wcount, p3_prereg_uwcount, type = "latex",
                      se = list(make_robust_se(p3_prereg_base),make_robust_se(p3_prereg_mcount),make_robust_se(p3_prereg_wcount),make_robust_se(p3_prereg_uwcount)), label = "tab:s2_prereg_loquaciousness", title = "Loquaciousness (Study 2)", out = "outputs/s2_prereg_loquaciousness.tex", table.placement = "H", tab.width = "\\textwidth",
-                    covariate.labels = c("Treatment\\\\(Co-Partisan Accountability)", "Ideological Extremity", "Male"),
+                    covariate.labels = c("Treatment\\\\(Neutral Accountability)", "Ideological Extremity", "Male"),
                     dep.var.labels = c("Character Count", "Message Count", "Word Count", "Unique Word Count"),
                     single.row = single_row)
 
 # stargazer(p3_prereg_base, p3_prereg_mcount, p3_prereg_wcount, p3_prereg_uwcount, type = "text",
 #                      se = list(make_robust_se(p3_prereg_base),make_robust_se(p3_prereg_mcount),make_robust_se(p3_prereg_wcount),make_robust_se(p3_prereg_uwcount)),
-#                     covariate.labels = c("Treatment\\\\(Co-Partisan Accountability)", "Ideological Extremity", "Male"),
+#                     covariate.labels = c("Treatment\\\\(Neutral Accountability)", "Ideological Extremity", "Male"),
 #                     dep.var.labels = c("Character Count", "Message Count", "Word Count", "Unique Word Count"),
 #                     single.row = single_row)
 
@@ -445,10 +446,10 @@ these_coefs <- summary(p3_prereg_base)$coefficients
 these_ses <- make_robust_se(p3_prereg_base)
 
 # vars <- match(c("(Intercept)", "t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
-# clean_names <- c("Intercept", "Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+# clean_names <- c("Intercept", "Neutral Accountability Treatment", "Ideology", "Male") %>% rev
 
 vars <- match(c("t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
-clean_names <- c("Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+clean_names <- c("Neutral Accountability Treatment", "Ideology", "Male") %>% rev
 
 par(bty = "n", pty = "s", mfrow = c(1,2))
 plot(x = these_coefs[vars,1], y = 1:length(vars), xlab = "Coefficient", yaxt = "n", ylab = "", type = "n",
@@ -468,10 +469,10 @@ these_coefs <- summary(p3_prereg_mcount)$coefficients
 these_ses <- make_robust_se(p3_prereg_mcount)
 
 # vars <- match(c("(Intercept)", "t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
-# clean_names <- c("Intercept", "Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+# clean_names <- c("Intercept", "Neutral Accountability Treatment", "Ideology", "Male") %>% rev
 
 vars <- match(c("t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
-clean_names <- c("Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+clean_names <- c("Neutral Accountability Treatment", "Ideology", "Male") %>% rev
 
 #par(bty = "n", pty = "s")
 plot(x = these_coefs[vars,1], y = 1:length(vars), xlab = "Coefficient", yaxt = "n", ylab = "", type = "n",
@@ -499,10 +500,10 @@ these_coefs <- summary(p3_prereg_base)$coefficients
 these_ses <- make_robust_se(p3_prereg_base)
 
 # vars <- match(c("(Intercept)", "t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
-# clean_names <- c("Intercept", "Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+# clean_names <- c("Intercept", "Neutral Accountability Treatment", "Ideology", "Male") %>% rev
 
 vars <- match(c("t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
-clean_names <- c("Co-Partisan Accountability Treatment", "Ideological Extremity", "Male") %>% rev
+clean_names <- c("Neutral Accountability Treatment", "Ideological Extremity", "Male") %>% rev
 
 par(bty = "n", pty = "s")
 plot(x = these_coefs[vars,1], y = 1:length(vars), xlab = "Coefficient", yaxt = "n", ylab = "", type = "n",
@@ -524,10 +525,10 @@ these_coefs <- summary(p3_prereg_mcount)$coefficients
 these_ses <- make_robust_se(p3_prereg_mcount)
 
 # vars <- match(c("(Intercept)", "t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
-# clean_names <- c("Intercept", "Co-Partisan Accountability Treatment", "Ideology", "Male") %>% rev
+# clean_names <- c("Intercept", "Neutral Accountability Treatment", "Ideology", "Male") %>% rev
 
 vars <- match(c("t", "ideological_extremity", "maleTRUE"), rownames(these_coefs)) %>% rev
-clean_names <- c("Co-Partisan Accountability Treatment", "Ideological Extremity", "Male") %>% rev
+clean_names <- c("Neutral Accountability Treatment", "Ideological Extremity", "Male") %>% rev
 
 par(bty = "n", pty = "s")
 plot(x = these_coefs[vars,1], y = 1:length(vars), xlab = "Coefficient", yaxt = "n", ylab = "", type = "n",
@@ -584,7 +585,7 @@ lm_affpol_1b <- lm(affpol_post ~ affpol_pre + alter_affpol_pre*char_diff_bin, da
 lm_affpol_2 <- lm(affpol_post ~ affpol_pre + alter_affpol_pre + t, data = affpol_data %>% filter(!is.na(room_id)))
 
 stargazer(lm_affpol_0,lm_affpol_1,lm_affpol_2, type = "latex",
-          se = list(make_robust_se(lm_affpol_0), make_robust_se(lm_affpol_1), make_robust_se(lm_affpol_2)), title = "Group Polarization", label = "tab:s2_group_polarization_main", out = "outputs/s2_group_polarization_main.tex", dep.var.labels = "Post-Chat Partisan Affect (D - R Feeling Thermo Diff)", covariate.labels = c("Pre-Chat Affect", "Partner's Pre-Chat Affect", "Treatment\\\\(Co-Partisan Accountability)"), omit.stat = c("f"), table.placement = "H", single.row = single_row)
+          se = list(make_robust_se(lm_affpol_0), make_robust_se(lm_affpol_1), make_robust_se(lm_affpol_2)), title = "Group Polarization", label = "tab:s2_group_polarization_main", out = "outputs/s2_group_polarization_main.tex", dep.var.labels = "Post-Chat Partisan Affect (D - R Feeling Thermo Diff)", covariate.labels = c("Pre-Chat Affect", "Partner's Pre-Chat Affect", "Treatment\\\\(Neutral Accountability)"), omit.stat = c("f"), table.placement = "H", single.row = single_row)
 
 stargazer(lm_affpol_1a,lm_affpol_1b, type = "latex",
          se = list(make_robust_se(lm_affpol_1a), make_robust_se(lm_affpol_1b)), title = "Group Polarization (Interaction Tests of Relative Loquaciousness)", label = "tab:s2_group_polarization_interactions", omit.stat = c("f"), out = "outputs/s2_group_polarization_interactions.tex", table.placement = "H", single.row = single_row,

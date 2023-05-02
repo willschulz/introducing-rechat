@@ -212,7 +212,8 @@ s1_survey_data <- raw_survey_data %>%
          sm_postpol_num = as.numeric(sm_postpol),
          
          ideo_7 = as.numeric(ideology),
-         ideological_extremity = 4-ideo_7
+         ideological_extremity = 4-ideo_7,
+         t = 1-t
          ) %>% filter(ideo_7<=4)
 
 s1_survey_data$guess_partner_ideo <- as.numeric(s1_survey_data$guess_partner_ideo)
@@ -357,8 +358,6 @@ resizebox.stargazer(logit_extroversion_base, logit_selfmon_base, logit_extrovers
                     covariate.labels = c("Extroversion", "Self-Monitoring", "Political Interest", "6-point PID", "Affective Polarization", "7-Point Ideology", "Ideological Identity Strength", "Media Consumption Scale", "Male", "Age", "College", "Social Media Expressor"),
                     dep.var.labels = "Chat Consent",
                     tab.width = "\\textwidth", omit.stat = c("f"), single.row = TRUE)
-
-#"Partner's Pre-Chat Affect", "Treatment\\\\(Co-Partisan Accountability)"
 ```
 
 
@@ -502,7 +501,7 @@ stargazer::stargazer(lm_message_count, lm_char_count, lm_word_count, lm_unique_w
 
 resizebox.stargazer(lm_char_count, lm_message_count, lm_word_count, lm_unique_word_count, type = "latex",
                      se = list(make_robust_se(lm_char_count),make_robust_se(lm_message_count),make_robust_se(lm_word_count),make_robust_se(lm_unique_word_count)), title = "Loquaciousness (Study 1)", label = "tab:s1_loquaciousness", out = "outputs/s1_loquaciousness_resized.tex", table.placement = "H", omit.stat = c("f"), single.row = TRUE,
-                    covariate.labels = c("Treatment\\\\(Co-Partisan Accountability)", "Extroversion", "Self-Monitoring", "Political Interest", "6-point PID", "Affective Polarization", "Ideological Extremity", "Ideological Identity Strength", "Media Consumption Scale", "Male", "Age", "College", "Social Media Expressor"),
+                    covariate.labels = c("Treatment\\\\(Neutral Accountability)", "Extroversion", "Self-Monitoring", "Political Interest", "6-point PID", "Affective Polarization", "Ideological Extremity", "Ideological Identity Strength", "Media Consumption Scale", "Male", "Age", "College", "Social Media Expressor"),
                     dep.var.labels = c("Character Count", "Message Count", "Word Count", "Unique Word Count"),
                     tab.width = "\\textwidth"
                     #tab.height = ".5\\textheight"
