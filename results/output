@@ -1,0 +1,468 @@
++ Rscript analyses.R
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: ‘lubridate’
+
+The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+
+
+Please cite as: 
+
+ Hlavac, Marek (2022). stargazer: Well-Formatted Regression and Summary Statistics Tables.
+ R package version 5.2.3. https://CRAN.R-project.org/package=stargazer 
+
+Loading required package: zoo
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+Using poppler version 0.62.0
+null device 
+          1 
+[1] 483
+[1] 349
+[1] 0.7225673
+
+% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy Institute. E-mail: marek.hlavac at gmail.com
+% Date and time: Thu, Sep 12, 2024 - 12:44:47 AM
+\begin{table}[H] \centering 
+  \caption{Self-Selection into Chat Participation (Study 1)} 
+  \label{tab:s1_selection_into_chat} 
+\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{5}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-6} 
+\\[-1.8ex] & \multicolumn{5}{c}{chat\_consent} \\ 
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5)\\ 
+\hline \\[-1.8ex] 
+ extro\_scale & 0.198$^{*}$ (0.102) &  & 0.088 (0.115) & 0.139 (0.122) & 0.136 (0.123) \\ 
+  selfmon\_scale &  & 0.222$^{**}$ (0.107) & 0.143 (0.120) & 0.123 (0.128) & 0.082 (0.130) \\ 
+  as.numeric(polInt) &  &  & 0.246$^{**}$ (0.112) & 0.289$^{**}$ (0.121) & 0.267$^{**}$ (0.121) \\ 
+  PID\_strength &  &  & $-$0.037 (0.219) & 0.031 (0.227) & 0.029 (0.230) \\ 
+  affpol\_pre &  &  & $-$0.007 (0.005) & $-$0.006 (0.005) & $-$0.006 (0.005) \\ 
+  ideo\_7 &  &  & $-$0.044 (0.140) & 0.033 (0.146) & 0.020 (0.148) \\ 
+  identity\_scale &  &  & 0.105 (0.144) & 0.112 (0.150) & 0.055 (0.153) \\ 
+  media\_scale &  &  & $-$0.023 (0.121) & $-$0.039 (0.126) & $-$0.079 (0.127) \\ 
+  male &  &  &  & $-$0.330 (0.226) & $-$0.347 (0.228) \\ 
+  age &  &  &  & $-$0.015$^{*}$ (0.009) & $-$0.013 (0.009) \\ 
+  college &  &  &  & 0.823$^{**}$ (0.370) & 0.894$^{**}$ (0.375) \\ 
+  expressor &  &  &  &  & 0.586$^{**}$ (0.232) \\ 
+  Constant & 0.966$^{***}$ (0.102) & 0.968$^{***}$ (0.103) & 0.570 (0.743) & 0.079 (0.886) & $-$0.364 (0.905) \\ 
+ \hline \\[-1.8ex] 
+Observations & 483 & 483 & 482 & 464 & 464 \\ 
+Log Likelihood & $-$283.326 & $-$282.966 & $-$278.133 & $-$266.747 & $-$263.575 \\ 
+Akaike Inf. Crit. & 570.652 & 569.933 & 574.265 & 557.495 & 553.150 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{5}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+Warning message:
+`prepend()` was deprecated in purrr 1.0.0.
+ℹ Please use append(after = 0) instead. 
+
+% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy Institute. E-mail: marek.hlavac at gmail.com
+% Date and time: Thu, Sep 12, 2024 - 12:44:48 AM
+\begin{table}[H] \centering 
+  \caption{Predictors of Extroversion} 
+  \label{tab:s1_extro_corr_otherpredictors} 
+\begin{tabular}{@{\extracolsep{5pt}}lc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{1}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-2} 
+\\[-1.8ex] & Extroversion \\ 
+\hline \\[-1.8ex] 
+ Political Interest & 0.202$^{***}$ (0.043) \\ 
+  College & 0.192 (0.170) \\ 
+  Social Media Expressor & 0.220$^{**}$ (0.095) \\ 
+  Constant & $-$1.098$^{***}$ (0.224) \\ 
+ \hline \\[-1.8ex] 
+Observations & 483 \\ 
+R$^{2}$ & 0.069 \\ 
+Adjusted R$^{2}$ & 0.063 \\ 
+Residual Std. Error & 0.968 (df = 479) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{1}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+null device 
+          1 
+[1] 91.86747
+
+Attaching package: ‘rlang’
+
+The following objects are masked from ‘package:purrr’:
+
+    %@%, flatten, flatten_chr, flatten_dbl, flatten_int, flatten_lgl,
+    flatten_raw, invoke, splice
+
+Warning message:
+There was 1 warning in `mutate()`.
+ℹ In argument: `gender = fct_case_when(...)`.
+Caused by warning:
+! `squash_chr()` is deprecated as of rlang 1.1.0.
+This warning is displayed once every 8 hours. 
+Warning messages:
+1: In survey_data$alter_code[which(survey_data$ego_code == all_codes[j])] <- (alter_codes) :
+  number of items to replace is not a multiple of replacement length
+2: In survey_data$alter_code[which(survey_data$ego_code == all_codes[j])] <- (alter_codes) :
+  number of items to replace is not a multiple of replacement length
+3: In survey_data$alter_code[which(survey_data$ego_code == all_codes[j])] <- (alter_codes) :
+  number of items to replace is not a multiple of replacement length
+4: In survey_data$alter_code[which(survey_data$ego_code == all_codes[j])] <- (alter_codes) :
+  number of items to replace is not a multiple of replacement length
+5: In survey_data$alter_code[which(survey_data$ego_code == all_codes[j])] <- (alter_codes) :
+  number of items to replace is not a multiple of replacement length
+6: In survey_data$alter_code[which(survey_data$ego_code == all_codes[j])] <- (alter_codes) :
+  number of items to replace is not a multiple of replacement length
+7: In survey_data$alter_code[which(survey_data$ego_code == all_codes[j])] <- (alter_codes) :
+  number of items to replace is not a multiple of replacement length
+8: In survey_data$alter_code[which(survey_data$ego_code == all_codes[j])] <- (alter_codes) :
+  number of items to replace is not a multiple of replacement length
+9: In survey_data$alter_code[which(survey_data$ego_code == all_codes[j])] <- (alter_codes) :
+  number of items to replace is not a multiple of replacement length
+10: In survey_data$alter_code[which(survey_data$ego_code == all_codes[j])] <- (alter_codes) :
+  number of items to replace is not a multiple of replacement length
+
+Loquaciousness (Study 2)
+====================================================
+                             Dependent variable:    
+                         ---------------------------
+                           # Characters (Pre-Reg)   
+----------------------------------------------------
+TreatmentAccountability)          p = 0.710         
+                                                    
+Ideological Extremity             p = 0.023         
+                                                    
+Male                              p = 0.622         
+                                                    
+Constant                          p = 0.000         
+                                                    
+----------------------------------------------------
+Observations                         390            
+R2                                  0.012           
+Adjusted R2                         0.004           
+Residual Std. Error          375.307 (df = 386)     
+F Statistic                  1.574 (df = 3; 386)    
+====================================================
+Note:                    *p<0.1; **p<0.05; ***p<0.01
+
+Loquaciousness (Study 2)
+====================================================
+                             Dependent variable:    
+                         ---------------------------
+                                 # Messages         
+----------------------------------------------------
+TreatmentAccountability)          p = 0.018         
+                                                    
+Ideological Extremity             p = 0.053         
+                                                    
+Male                              p = 0.028         
+                                                    
+Constant                          p = 0.000         
+                                                    
+----------------------------------------------------
+Observations                         390            
+R2                                  0.033           
+Adjusted R2                         0.025           
+Residual Std. Error           4.888 (df = 386)      
+F Statistic                4.364*** (df = 3; 386)   
+====================================================
+Note:                    *p<0.1; **p<0.05; ***p<0.01
+null device 
+          1 
+null device 
+          1 
+Joining with `by = join_by(ResponseId, t)`
+Joining with `by = join_by(StartDate, EndDate, Status, IPAddress, Progress,
+`Duration (in seconds)`, Finished, RecordedDate, ResponseId, RecipientLastName,
+RecipientFirstName, RecipientEmail, ExternalReference, LocationLatitude,
+LocationLongitude, DistributionChannel, UserLanguage, Q_RecaptchaScore,
+consent_response, `timer_mainconsent_First Click`, `timer_mainconsent_Last
+Click`, `timer_mainconsent_Page Submit`, `timer_mainconsent_Click Count`,
+birthyr, gender, gender_3_TEXT, education, polInt, PID, PID_DO_1, PID_DO_2,
+PID_DO_3, PID_DO_5, PID_dem_strength, PID_rep_strength, PID_leaners, ideology,
+ideology_DO_1, ideology_DO_2, ideology_DO_6, ideology_DO_3, ideology_DO_8,
+ideology_DO_4, ideology_DO_5, thermo_pre_4, thermo_pre_7, thermo_pre_DO_4,
+thermo_pre_DO_7, `1_extroversion`, `2_extroversion`, `3_extroversion`,
+`4_extroversion`, `5_extroversion`, `6_extroversion`, `7_extroversion`,
+`8_extroversion`, `9_extroversion`, `10_extroversion`, news_media_1,
+news_media_2, news_media_3, news_media_4, news_media_5, news_media_6, selfMon1,
+selfMon2, selfMon3, social_media_1, social_media_2, social_media_3,
+social_media_9, social_media_10, social_media_11, social_media_DO_1,
+social_media_DO_2, social_media_DO_3, social_media_DO_9, social_media_DO_10,
+social_media_DO_11, primary_sm, primary_sm_DO_1, primary_sm_DO_2,
+primary_sm_DO_3, primary_sm_DO_4, primary_sm_DO_10, primary_sm_DO_11,
+primary_sm_DO_12, sm_usage, sm_postpol, huddy1, huddy2, huddy3, chat_consent,
+`timer_chatconsent_First Click`, `timer_chatconsent_Last Click`,
+`timer_chatconsent_Page Submit`, `timer_chatconsent_Click Count`, why_not,
+ego_code, had_problem_1, describe_problem, problem_screenshot_Id,
+problem_screenshot_Name, problem_screenshot_Size, problem_screenshot_Type,
+browser_info_Browser, browser_info_Version, `browser_info_Operating System`,
+browser_info_Resolution, `timer_chat_First Click`, `timer_chat_Last Click`,
+`timer_chat_Page Submit`, `timer_chat_Click Count`, guess_partner_ideo,
+guess_partner_ideo_DO_1, guess_partner_ideo_DO_2, guess_partner_ideo_DO_3,
+guess_partner_ideo_DO_4, guess_partner_ideo_DO_5, guess_partner_ideo_DO_6,
+guess_partner_ideo_DO_7, enjoyment, thermo_post_4, thermo_post_7,
+thermo_post_DO_4, thermo_post_DO_7, socdist_friends, socdist_neighbors,
+socdist_marry, traitratings_other_1, traitratings_other_2,
+traitratings_other_3, traitratings_other_4, traitratings_other_5,
+traitratings_other_6, traitratings_other_7, traitratings_other_8,
+traitratings_own_1, traitratings_own_2, traitratings_own_3, traitratings_own_4,
+traitratings_own_5, traitratings_own_6, traitratings_own_7, traitratings_own_8,
+measure_extro, partisanship, other_partisanship, t, reviewers, FL_72_DO_FL_73,
+FL_72_DO_FL_74, affpol_pre, affpol_post, affpol_change, demthermo_change,
+repthermo_change, PID_5, PID_6, id_important, id_describe, id_wethey, tv,
+newspapers, radio, internet_sm, discussions, podcasts, twitter, facebook,
+instagram, reddit, tiktok, youtube, age, male, college, expressor,
+sm_postpol_num, ideo_7, sm_postpol_num_nazero, ideo_ext, extro_scale,
+identity_scale, sm_scale, media_scale, selfmon_scale, extroselfmon_scale,
+char_count, word_count, message_count, unique_word_count, median_word_length,
+mean_word_length, room_id, ego_mean_sentiment, alter_code, alter_t,
+alter_ideo_7, alter_affpol_pre, alter_identity_scale, alter_male, alter_PID_6,
+alter_message_count, alter_char_count, alter_mean_sentiment)`
+null device 
+          1 
+
+% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy Institute. E-mail: marek.hlavac at gmail.com
+% Date and time: Thu, Sep 12, 2024 - 12:46:33 AM
+\begin{table}[H] \centering 
+  \caption{Group Polarization} 
+  \label{tab:s2_group_polarization_main} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{Post-Chat Partisan Affect (D - R Feeling Thermo Diff)} \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ Pre-Chat Affect & 0.969$^{***}$ (0.016) & 0.961$^{***}$ (0.017) & 0.962$^{***}$ (0.017) \\ 
+  Partner's Pre-Chat Affect &  & 0.080$^{***}$ (0.021) & 0.082$^{***}$ (0.021) \\ 
+  Treatment\\(Neutral Accountability) &  &  & $-$1.829$^{*}$ (1.014) \\ 
+  Constant & 4.615$^{***}$ (1.069) & 0.613 (1.329) & 1.318 (1.495) \\ 
+ \hline \\[-1.8ex] 
+Observations & 389 & 362 & 362 \\ 
+R$^{2}$ & 0.881 & 0.878 & 0.879 \\ 
+Adjusted R$^{2}$ & 0.880 & 0.878 & 0.878 \\ 
+Residual Std. Error & 9.921 (df = 387) & 9.981 (df = 359) & 9.953 (df = 358) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+
+% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy Institute. E-mail: marek.hlavac at gmail.com
+% Date and time: Thu, Sep 12, 2024 - 12:46:33 AM
+\begin{table}[H] \centering 
+  \caption{Group Polarization (Interaction Tests of Relative Loquaciousness)} 
+  \label{tab:s2_group_polarization_interactions} 
+\begin{tabular}{@{\extracolsep{5pt}}lcc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-3} 
+\\[-1.8ex] & \multicolumn{2}{c}{Post-Chat Partisan Affect (D - R Feeling Thermo Diff)} \\ 
+\\[-1.8ex] & (1) & (2)\\ 
+\hline \\[-1.8ex] 
+ Pre-Chat Affect & 0.959$^{***}$ (0.017) & 0.961$^{***}$ (0.017) \\ 
+  Partner's Pre-Chat Affect & 0.077$^{**}$ (0.033) & 0.083$^{***}$ (0.030) \\ 
+  Partner Sent More Messages & 1.626 (2.261) &  \\ 
+  Partner's Pre-Chat Affect\\$\times$ Partner Sent More Messages & 0.009 (0.038) &  \\ 
+  Partner Wrote More Characters &  & $-$0.555 (2.376) \\ 
+  Partner's Pre-Chat Affect\\$\times$ Partner Wrote More Characters &  & $-$0.005 (0.040) \\ 
+  Constant & $-$0.025 (2.079) & 0.891 (1.608) \\ 
+ \hline \\[-1.8ex] 
+Observations & 362 & 362 \\ 
+R$^{2}$ & 0.880 & 0.878 \\ 
+Adjusted R$^{2}$ & 0.878 & 0.877 \\ 
+Residual Std. Error (df = 357) & 9.951 & 9.999 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{2}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+
+% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy Institute. E-mail: marek.hlavac at gmail.com
+% Date and time: Thu, Sep 12, 2024 - 12:46:33 AM
+\begin{table}[H] \centering 
+  \caption{Group Polarization (Interaction Tests with Accountability Treatment)} 
+  \label{tab:s2_group_polarization_interactions_withtreat} 
+\begin{tabular}{@{\extracolsep{5pt}}lcc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-3} 
+\\[-1.8ex] & \multicolumn{2}{c}{Post-Chat Partisan Affect (D - R Feeling Thermo Diff)} \\ 
+\\[-1.8ex] & (1) & (2)\\ 
+\hline \\[-1.8ex] 
+ Pre-Chat Affect & 0.963$^{***}$ (0.017) & 0.974$^{***}$ (0.017) \\ 
+  Treatment\\(Neutral Accountability) & 2.739 (2.238) & $-$6.858 (4.545) \\ 
+  Partner's Pre-Chat Affect & 0.117$^{***}$ (0.031) &  \\ 
+  Partner's Pre-Chat Affect\\$\times$ Treatment & $-$0.081$^{**}$ (0.040) &  \\ 
+  Partisanship Strength &  & $-$1.344 (1.487) \\ 
+  Partisanship Strength\\$\times$ Treatment &  & 2.044 (1.793) \\ 
+  Constant & $-$0.706 (1.855) & 8.481$^{**}$ (3.651) \\ 
+ \hline \\[-1.8ex] 
+Observations & 362 & 389 \\ 
+R$^{2}$ & 0.881 & 0.882 \\ 
+Adjusted R$^{2}$ & 0.879 & 0.881 \\ 
+Residual Std. Error & 9.905 (df = 357) & 9.910 (df = 384) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{2}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+
+% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy Institute. E-mail: marek.hlavac at gmail.com
+% Date and time: Thu, Sep 12, 2024 - 12:46:34 AM
+\begin{table}[H] \centering 
+  \caption{Baseline Partisan Affect and Mean Message Sentiment} 
+  \label{tab:s2_sentiment} 
+\begin{tabular}{@{\extracolsep{5pt}}lcc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-3} 
+\\[-1.8ex] & \multicolumn{2}{c}{Mean Sentiment of Messages} \\ 
+\\[-1.8ex] & (1) & (2)\\ 
+\hline \\[-1.8ex] 
+ Baseline Partisan Affect & $-$0.001$^{***}$ (0.0002) & $-$0.001$^{***}$ (0.0003) \\ 
+  Extroversion &  & 0.003 (0.006) \\ 
+  Self-Monitoring &  & 0.008 (0.006) \\ 
+  Political Interest &  & $-$0.005 (0.006) \\ 
+  6-Point PID &  & $-$0.020 (0.015) \\ 
+  7-Point Ideology &  & $-$0.005 (0.008) \\ 
+  Ideological Identity &  & 0.003 (0.009) \\ 
+  Media Consumption Scale &  & 0.002 (0.007) \\ 
+  Constant & 0.025$^{*}$ (0.013) & 0.096$^{**}$ (0.048) \\ 
+ \hline \\[-1.8ex] 
+Observations & 362 & 362 \\ 
+R$^{2}$ & 0.033 & 0.052 \\ 
+Adjusted R$^{2}$ & 0.031 & 0.031 \\ 
+Residual Std. Error & 0.111 (df = 360) & 0.111 (df = 353) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{2}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+[1] 0.3958168
+[1] 0.5941832
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+pdf 
+  2 
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+pdf 
+  2 
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+Warning message:
+In axis(2, ...) : "add" is not a graphical parameter
+pdf 
+  2 
+pdf 
+  2 
+pdf 
+  2 
+pdf 
+  2 
+pdf 
+  2 
+pdf 
+  2 
+
+% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy Institute. E-mail: marek.hlavac at gmail.com
+% Date and time: Thu, Sep 12, 2024 - 12:51:49 AM
+\begin{table}[H] \centering 
+  \caption{Mobile Devices and Loquaciousness} 
+  \label{tab:s12_mobile_loq} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{4}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-5} 
+\\[-1.8ex] & char\_count & message\_count & word\_count & unique\_word\_count \\ 
+\\[-1.8ex] & (1) & (2) & (3) & (4)\\ 
+\hline \\[-1.8ex] 
+ took\_on\_mobile & $-$161.861$^{***}$ (51.443) & $-$1.275$^{*}$ (0.663) & $-$28.744$^{***}$ (9.382) & $-$19.156$^{***}$ (5.473) \\ 
+  as.factor(study)2 & 512.137$^{***}$ (24.445) & 4.906$^{***}$ (0.315) & 94.939$^{***}$ (4.458) & 57.778$^{***}$ (2.601) \\ 
+  Constant & 394.692$^{***}$ (18.801) & 4.235$^{***}$ (0.242) & 70.709$^{***}$ (3.429) & 54.817$^{***}$ (2.000) \\ 
+ \hline \\[-1.8ex] 
+Observations & 669 & 669 & 669 & 669 \\ 
+R$^{2}$ & 0.400 & 0.268 & 0.408 & 0.429 \\ 
+Adjusted R$^{2}$ & 0.398 & 0.266 & 0.406 & 0.427 \\ 
+Residual Std. Error (df = 666) & 311.481 & 4.014 & 56.808 & 33.136 \\ 
+F Statistic (df = 2; 666) & 222.018$^{***}$ & 122.077$^{***}$ & 229.076$^{***}$ & 250.100$^{***}$ \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{4}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+
+% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy Institute. E-mail: marek.hlavac at gmail.com
+% Date and time: Thu, Sep 12, 2024 - 12:51:49 AM
+\begin{table}[H] \centering 
+  \caption{Mobile Devices and Technical Problems Reported} 
+  \label{tab:s12_mobile_tech} 
+\begin{tabular}{@{\extracolsep{5pt}}lc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{1}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-2} 
+\\[-1.8ex] & !is.na(had\_problem\_1) \\ 
+\hline \\[-1.8ex] 
+ took\_on\_mobile & 0.022 (0.046) \\ 
+  as.factor(study)2 & 0.004 (0.023) \\ 
+  age & 0.005$^{***}$ (0.001) \\ 
+  Constant & $-$0.075$^{*}$ (0.038) \\ 
+ \hline \\[-1.8ex] 
+Observations & 747 \\ 
+R$^{2}$ & 0.035 \\ 
+Adjusted R$^{2}$ & 0.031 \\ 
+Residual Std. Error & 0.306 (df = 743) \\ 
+F Statistic & 8.926$^{***}$ (df = 3; 743) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{1}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 

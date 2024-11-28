@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+set -e
+Rscript -e "webshot::install_phantomjs()"
